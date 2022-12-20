@@ -4,6 +4,10 @@ import lk.ijse.dep9.app.dao.custom.UserDAO;
 import lk.ijse.dep9.app.entity.User;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,36 +20,91 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User save(User user) {
-        connection.prepareStatement("INSERT INTO User ()")
+        try {
+            PreparedStatement stm = connection.prepareStatement("INSERT INTO User (username, full_name, password) VALUES (?,?,?)");
+            stm.setString(1, user.getUsername());
+            stm.setString(2, user.getFullName());
+            stm.setString(3, user.getPassword());
+            stm.executeUpdate();
+            return user;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void update(User user) {
-
+        try {
+            PreparedStatement stm = connection.prepareStatement("UPDATE User SET full_name=?,password=? WHERE username=?");
+            stm.setString(3, user.getUsername());
+            stm.setString(1, user.getFullName());
+            stm.setString(2, user.getPassword());
+            stm.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public void deleteById(String pk) {
-
+    public void deleteById(String username) {
+        try {
+            PreparedStatement stm = connection.prepareStatement("DELETE FROM User WHERE username=?");
+            stm.setString(1, username);
+            stm.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public Optional<User> findById(String pk) {
-        return Optional.empty();
+    public Optional<User> findById(String username) {
+        try {
+            PreparedStatement stm = connection.prepareStatement("SELECT full_name,password FROM User WHERE username=?");
+            stm.setString(1, username);
+            ResultSet rst = stm.executeQuery();
+            if(rst.next()){
+                return Optional.of(new User(username,
+                        rst.getString("full_name"), rst.getString("password")));
+
+            }
+            return Optional.empty();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public List<User> findAll() {
-        return null;
+        try {
+            PreparedStatement stm = connection.prepareStatement("SELECT * FROM User");
+            ResultSet rst = stm.executeQuery();
+            List<User> userList = new ArrayList<>();
+            while (rst.next()){
+                String username = rst.getString("username");
+                String full_name = rst.getString("full_name");
+                String password = rst.getString("password");
+                userList.add(new User(username,full_name,password));
+            }
+            return userList;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public long count() {
-        return 0;
+        try {
+            PreparedStatement stm = connection.prepareStatement("SELECT COUNT(username) FROM User");
+            ResultSet rst = stm.executeQuery();
+            rst.next();
+            return rst.getLong(1);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
-    public boolean existsById(String pk) {
-        return false;
+    public boolean existsById(String username) {
+       return findById(username).isPresent();
     }
 }
