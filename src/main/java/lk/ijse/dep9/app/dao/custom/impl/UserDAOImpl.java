@@ -16,7 +16,7 @@ public class UserDAOImpl implements UserDAO {
 
     @Override
     public User save(User user) {
-        return null;
+        connection.prepareStatement("INSERT INTO User ()")
     }
 
     @Override
